@@ -1,6 +1,6 @@
 
 
-sims_pn_crn_di <- function(init_inf, types,  params, params_pn, tte_screen, tte_pn) {
+sims_pn_crn_di_fix <- function(init_inf, types,  params, params_pn, tte_screen, tte_pn) {
   
   inf_state <- new_inf <- clearance <- diagn <- pn_index <- inf_dur <-  pn_partn <- matrix(0, length(init_inf), params[["simlength"]] +1)
   inf_state[,1] <- init_inf
@@ -16,7 +16,7 @@ sims_pn_crn_di <- function(init_inf, types,  params, params_pn, tte_screen, tte_
       # infection acquisition
       if ( inf_state[m,i-1]==0 ) {
         
-        # infection acquisition probability from any infected partner
+        # infection acquistion probability from any infected partner
         main_inf <- rbinom( sum(inf_state[partn[[m]],i-1]) ,1, params[["trnsm_pr"]])
         
         new_inf[m,i] <- ifelse(any(main_inf) >0, 1, 0)
@@ -26,20 +26,19 @@ sims_pn_crn_di <- function(init_inf, types,  params, params_pn, tte_screen, tte_
       }else{
         inf_dur[m, i] <- inf_dur[m, i-1] + 1
         clearance[m,i] <- rbinom(1,1, params[["clear_pr"]])
-
+        
         # Diagnose infection after X time steps
-        # there is something weird about this, should be able to pick up with == but in some cases does not 
-        # (both not integers could cause this?)
+        # there is something weird about this, should be able to pick up with == but in some cases does not
         diagn[m, i] <- ifelse(inf_dur[m, i] >= tte_screen[[m]][1], 1, 0)
         
         if (clearance[m, i] > 0 | diagn[m, i] > 0) {
-            inf_state[m, i] <- 0
-            inf_dur[m, i] <- 0
-            tte_screen[[m]] <- tte_screen[[m]][-1]
+          inf_state[m, i] <- 0
+          inf_dur[m, i] <- 0
+          tte_screen[[m]] <- tte_screen[[m]][-1]
         } else {
           inf_state[m, i] <- 1
         }
-
+    
       # partner notification
       if ( diagn[m,i] >0 &  params[["pn_pr"]]>0  ) {
         
@@ -51,13 +50,22 @@ sims_pn_crn_di <- function(init_inf, types,  params, params_pn, tte_screen, tte_
         
         if (  pn_index[m,i] > 0) {
           
+          # Identify partners that were infected
+          partn_infected <- partn[[m]][inf_state[partn[[m]], i-1] > 0]
+          
           # all partners treated
           inf_state[partn[[m]],i] <- 0
           pn_partn[partn[[m]],i] <- 3
           diagn[partn[[m]],i] <- ifelse(inf_state[partn[[m]],i-1]>0, 3, 0)
           
+          ## here the fix: which infections are treated via PN, need their screen index adjusted (move on to next)
+          if (length(partn_infected) > 0) {
+            for (partner_id in partn_infected) {
+              tte_screen[[partner_id]] <- tte_screen[[partner_id]][-1]
+            }
+          }
         }
-      }
+       }
      }
     }
   }
