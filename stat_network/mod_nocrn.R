@@ -17,7 +17,7 @@ sims_pn_nocrn <- function(init_inf, types,  params, params_pn) {
       if ( inf_state[m,i-1]==0 ) {
 
         # as long as everyone has >0 partners, this works
-        main_inf <- (rbinom(length(inf_state[partn[[m]],i-1]) ,1, params[["trnsm_pr"]]))==TRUE 
+        main_inf <- (rbinom(sum(inf_state[partn[[m]],i-1]) ,1, params[["trnsm_pr"]]))==TRUE 
 
         new_inf[m,i] <- ifelse(any(main_inf) >0, 1, 0)
         inf_state[m,i] <- new_inf[m,i]
