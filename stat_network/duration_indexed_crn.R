@@ -20,5 +20,13 @@ generate_tte <- function(popsize, num_draws, params) {
     lapply(1:popsize, function(x) { notified <- rbinom(100, 1, params[["pn_pr"]]) })
   }, simplify = FALSE)
   
-  list(tte_screen = tte_screen, tte_pn = tte_pn)
+  tte_nopn <- replicate(num_draws, {
+    lapply(1:popsize, function(x) { notified <- rbinom(100, 1, 0) })
+  }, simplify = FALSE)
+  
+  tte_allpn <- replicate(num_draws, {
+    lapply(1:popsize, function(x) { notified <- rbinom(100, 1, 1) })
+  }, simplify = FALSE)
+  
+  list(tte_screen = tte_screen, tte_pn = tte_pn, tte_nopn = tte_nopn, tte_allpn=tte_allpn)
 }
